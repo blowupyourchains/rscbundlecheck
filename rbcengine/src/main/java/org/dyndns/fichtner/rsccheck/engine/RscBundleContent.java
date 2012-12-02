@@ -6,8 +6,6 @@ import java.util.Set;
 
 public class RscBundleContent {
 
-	private static final long serialVersionUID = 2288731121064475289L;
-
 	public static class Entry {
 
 		private final String value;
