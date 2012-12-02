@@ -1,0 +1,129 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.dyndns.fichtner.rsccheck</groupId>
+	<artifactId>anttask</artifactId>
+	<version>1.4.1-SNAPSHOT</version>
+	<name>ResourceBundleCheckAntTask</name>
+	<description>AntTask for checking Java resourcebundles</description>
+	<url>http://rscbundlecheck.sourceforge.net/</url>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+	</properties>
+
+	<developers>
+		<developer>
+			<id>pfichtner</id>
+			<name>Peter Fichtner</name>
+			<roles>
+				<role>Java Developer</role>
+			</roles>
+		</developer>
+	</developers>
+
+	<licenses>
+		<license>
+			<name>GNU General Public License (GPL)</name>
+			<url>http://www.gnu.org/licenses/gpl.html</url>
+		</license>
+	</licenses>
+
+	<profiles>
+		<profile>
+			<id>release-sign-artifacts</id>
+			<activation>
+				<property>
+					<name>performRelease</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.ant</groupId>
+			<artifactId>ant</artifactId>
+			<version>1.7.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.dyndns.fichtner.rsccheck</groupId>
+			<artifactId>engine</artifactId>
+			<version>1.4.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.10</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>1.5</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<shadedArtifactAttached>false</shadedArtifactAttached>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.2.2</version>
+			</plugin>
+
+		</plugins>
+	</build>
+
+	<scm>
+		<url><![CDATA[http://sourceforge.net/scm/?type=cvs&group_id=212749]]></url>
+		<connection>scm:cvs:extssh:anonymous@rscbundlecheck.cvs.sourceforge.net:/cvsroot/rscbundlecheck</connection>
+		<developerConnection>scm:cvs:extssh:fichtner@rscbundlecheck.cvs.sourceforge.net:/cvsroot/rscbundlecheck</developerConnection>
+	</scm>
+
+	<!-- user/password, see http://www.sonatype.com/people/2010/11/what-to-do-when-nexus-returns-401/ -->
+	<distributionManagement>
+		<repository>
+			<id>sonatype-nexus-staging</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+		</repository>
+		<snapshotRepository>
+			<id>sonatype-nexus-snapshot</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
+
+</project>
