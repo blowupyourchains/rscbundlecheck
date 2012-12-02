@@ -18,20 +18,24 @@ import java.io.Reader;
 import org.dyndns.fichtner.rsccheck.engine.RscBundleContent.Entry;
 
 /**
- * 
+ *
  * Reads a resource bundle. This code is borrowed from the
  * <code>java.util.Properties</code>.
- * 
+ *
  * @author <a href="mailto:marcolehmann@users.sourceforge.net">Marco Lehmann</a>
- * 
+ *
  * @version $Revision: 1.1 $
- * 
+ *
  * @since 0.1.0
- * 
+ *
  * @see java.util.Properties
- * 
+ *
  */
 public class RscBundleReaderFile implements RscBundleReader {
+
+	private static final String KEY_VALUE_SEPARATORS = "=: \t\r\n\f"; //$NON-NLS-1$
+	private static final String STRICT_KEY_VALUE_SEPARATORS = "=:"; //$NON-NLS-1$
+	private static final String WHITE_SPACE_CHARS = " \t\r\n\f"; //$NON-NLS-1$
 
 	private final String identifier;
 	private BufferedReader reader;
@@ -53,17 +57,11 @@ public class RscBundleReaderFile implements RscBundleReader {
 		this.identifier = identifier;
 	}
 
-	private static final String keyValueSeparators = "=: \t\r\n\f"; //$NON-NLS-1$
-
-	private static final String strictKeyValueSeparators = "=:"; //$NON-NLS-1$
-
-	private static final String whiteSpaceChars = " \t\r\n\f"; //$NON-NLS-1$
-
 	private void readPropertiesFile(RscBundleContent content)
 			throws IOException {
 
 		int lineCount = -1;
-		for (;;) {
+		for (; ; ) {
 
 			// Get next line
 			String line = this.reader.readLine();
@@ -75,73 +73,80 @@ public class RscBundleReaderFile implements RscBundleReader {
 			if (line.length() > 0) {
 
 				// Find start of key
-				int len = line.length();
-				int keyStart;
-				for (keyStart = 0; keyStart < len; keyStart++)
-					if (whiteSpaceChars.indexOf(line.charAt(keyStart)) == -1)
-						break;
+				int keyStart = findFirstNonWhiteSpaceChar(line);
 
 				// Blank lines are ignored
-				if (keyStart == len)
+				if (keyStart == line.length())
 					continue;
 
 				// Continue lines that end in slashes if they are not comments
 				char firstChar = line.charAt(keyStart);
 				if ((firstChar != '#') && (firstChar != '!')) {
-					while (continueLine(line)) {
-						String nextLine = this.reader.readLine();
-						if (nextLine == null)
-							nextLine = ""; //$NON-NLS-1$
-						String loppedLine = line.substring(0, len - 1);
-						// Advance beyond whitespace on new line
-						int startIndex;
-						for (startIndex = 0; startIndex < nextLine.length(); startIndex++)
-							if (whiteSpaceChars.indexOf(nextLine
-									.charAt(startIndex)) == -1)
-								break;
-						nextLine = nextLine.substring(startIndex, nextLine
-								.length());
-						line = new String(loppedLine + nextLine);
-						len = line.length();
-					}
+					line = readFullyLineIfNeeded(line);
 
 					// Find separation between key and value
 					int separatorIndex;
-					for (separatorIndex = keyStart; separatorIndex < len; separatorIndex++) {
+					for (separatorIndex = keyStart; separatorIndex < line.length(); separatorIndex++) {
 						char currentChar = line.charAt(separatorIndex);
 						if (currentChar == '\\')
 							separatorIndex++;
-						else if (keyValueSeparators.indexOf(currentChar) != -1)
+						else if (KEY_VALUE_SEPARATORS.indexOf(currentChar) != -1)
 							break;
 					}
 
 					// Skip over whitespace after key if any
-					int valueIndex;
-					for (valueIndex = separatorIndex; valueIndex < len; valueIndex++)
-						if (whiteSpaceChars.indexOf(line.charAt(valueIndex)) == -1)
-							break;
+					int valueIndex = findFirstNonWhiteSpaceChar(line, separatorIndex);
 
 					// Skip over one non whitespace key value separators if any
-					if (valueIndex < len)
-						if (strictKeyValueSeparators.indexOf(line
-								.charAt(valueIndex)) != -1)
+					if (valueIndex < line.length())
+						if (STRICT_KEY_VALUE_SEPARATORS.indexOf(line.charAt(valueIndex)) != -1)
 							valueIndex++;
 
 					// Skip over white space after other separators if any
-					while (valueIndex < len) {
-						if (whiteSpaceChars.indexOf(line.charAt(valueIndex)) == -1)
-							break;
-						valueIndex++;
-					}
-					content.add(line.substring(keyStart, separatorIndex),
-							new Entry(((separatorIndex < len) ? line.substring(
-									valueIndex, len) : ""), lineCount + 1));
+					valueIndex = findFirstNonWhiteSpaceChar(line, valueIndex);
+
+					String key = line.substring(keyStart, separatorIndex);
+					String value = (separatorIndex < line.length()) ? line.substring(valueIndex, line.length()) : "";
+					content.add(key, new Entry(value, lineCount + 1));
 
 				}
 
 			}
 
 		}
+
+	}
+
+	private String readFullyLineIfNeeded(String line) throws IOException {
+
+		while (continueLine(line)) {
+			String loppedLine = line.substring(0, line.length() - 1);
+
+			String nextLine = reader.readLine();
+			if (nextLine == null)
+				nextLine = ""; //$NON-NLS-1$
+
+			// Advance beyond whitespace on new line
+			int startIndex = findFirstNonWhiteSpaceChar(nextLine);
+			nextLine = nextLine.substring(startIndex, nextLine.length());
+
+			line = loppedLine + nextLine;
+		}
+		return line;
+
+	}
+
+	private int findFirstNonWhiteSpaceChar(String line) {
+		return findFirstNonWhiteSpaceChar(line, 0);
+	}
+
+	private int findFirstNonWhiteSpaceChar(String line, int beginIndex) {
+
+		int keyStart;
+		for (keyStart = beginIndex; keyStart < line.length(); keyStart++)
+			if (WHITE_SPACE_CHARS.indexOf(line.charAt(keyStart)) == -1)
+				break;
+		return keyStart;
 
 	}
 
